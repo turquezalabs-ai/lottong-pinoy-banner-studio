@@ -22,6 +22,7 @@ import {
 } from '@/lib/banner/analysis';
 import BlueprintBanner from '@/components/banner/BlueprintBanner';
 import AnalysisBanner from '@/components/banner/AnalysisBanner';
+import PublishPanel from '@/components/publish/PublishPanel';
 import { toPng } from 'html-to-image';
 import JSZip from 'jszip';
 
@@ -46,6 +47,7 @@ export default function BannerStudio() {
   // Refs for hidden capture targets (full size, off-screen)
   const captureBlueprintRef = useRef<HTMLDivElement>(null);
   const captureAnalysisRef = useRef<HTMLDivElement>(null);
+
 
   // ==========================================
   // LOAD DATA
@@ -337,16 +339,20 @@ export default function BannerStudio() {
       </header>
 
       <main className="max-w-7xl mx-auto px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-6">
-          {/* ===== LEFT: CONTROLS ===== */}
-          <div className="space-y-4">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* ===== LEFT: TAB SELECTOR + CONTROLS (Blueprint & Analysis) ===== */}
+          {activeTab !== 'publish' && (
+          <div className="w-full lg:w-[340px] shrink-0 space-y-4">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList className="w-full bg-gray-900 border border-gray-800">
                 <TabsTrigger value="blueprint" className="flex-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                   Blueprint
                 </TabsTrigger>
-                <TabsTrigger value="analysis" className="flex-1 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
+                <TabsTrigger value="analysis" className="flex-1 data-[state=active]:bg-purple-600 data-[state=active]:text-white">
                   Analysis
+                </TabsTrigger>
+                <TabsTrigger value="publish" className="flex-1 data-[state=active]:bg-emerald-600 data-[state=active]:text-white">
+                  🚀 Publish
                 </TabsTrigger>
               </TabsList>
 
@@ -429,7 +435,7 @@ export default function BannerStudio() {
                   <CardHeader className="pb-3">
                     <CardTitle className="text-white text-base">Draw Analysis</CardTitle>
                     <CardDescription className="text-gray-400 text-sm">
-                      Winning numbers breakdown with patterns
+                      Draw numbers breakdown with patterns
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -453,8 +459,8 @@ export default function BannerStudio() {
                       <div className="bg-gray-800/50 rounded-lg p-3 space-y-1">
                         <p className="text-gray-400 text-xs">Latest Draw</p>
                         <p className="text-white font-bold text-sm">{analysisDraw.combination}</p>
-                        <p className="text-yellow-400 text-xs font-semibold">
-                          {analysisDraw.jackpot_prize || analysisDraw.prize}
+                        <p className="text-blue-400 text-xs font-semibold">
+                          {analysisGameData.length.toLocaleString()} historical draws analyzed
                         </p>
                         <p className="text-gray-500 text-xs">{analysisDraw.date}</p>
                       </div>
@@ -473,8 +479,10 @@ export default function BannerStudio() {
               </TabsContent>
             </Tabs>
           </div>
+          )}
 
-          {/* ===== RIGHT: PREVIEW ===== */}
+          {/* ===== RIGHT: PREVIEW (Blueprint & Analysis only) ===== */}
+          {activeTab !== 'publish' && (
           <div className="flex flex-col items-center gap-4">
             <div className="flex items-center gap-2 w-full justify-center">
               <div className="h-px bg-gray-800 flex-1" />
@@ -518,7 +526,52 @@ export default function BannerStudio() {
 
             <p className="text-gray-600 text-xs">Preview scaled 30% — Downloads at full 1080x1350px</p>
           </div>
+          )}
         </div>
+
+        {/* ===== FULL WIDTH: PUBLISH TAB ===== */}
+        {activeTab === 'publish' && (
+          <div className="flex flex-col lg:flex-row gap-6">
+            {/* Publish tab selector */}
+            <div className="flex gap-2 lg:hidden">
+              <Button
+                variant={activeTab === 'blueprint' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('blueprint')}
+                className={activeTab === 'blueprint' ? 'bg-blue-600' : 'border-gray-700 text-gray-400'}
+              >Blueprint</Button>
+              <Button
+                variant={activeTab === 'analysis' ? 'default' : 'outline'}
+                onClick={() => setActiveTab('analysis')}
+                className={activeTab === 'analysis' ? 'bg-purple-600' : 'border-gray-700 text-gray-400'}
+              >Analysis</Button>
+            </div>
+            <div className="hidden lg:flex gap-2">
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab('blueprint')}
+                className="border-gray-700 text-gray-400 hover:text-white"
+              >Blueprint</Button>
+              <Button
+                variant="outline"
+                onClick={() => setActiveTab('analysis')}
+                className="border-gray-700 text-gray-400 hover:text-white"
+              >Analysis</Button>
+            </div>
+
+            {/* Publish panel - full width two-column layout */}
+            <div className="flex-1 max-w-[340px] lg:max-w-none space-y-4">
+              <PublishPanel
+                blueprintGame={blueprintGame}
+                blueprintNumbers={blueprintNumbers}
+                analysisGame={analysisGame}
+                analysisDraw={analysisDraw}
+                analysisClassified={analysisClassified}
+                analysisGameData={analysisGameData}
+                analysisDate={analysisDate}
+              />
+            </div>
+          </div>
+        )}
       </main>
 
       {/* ===== HIDDEN CAPTURE TARGETS (off-screen, used by html-to-image) ===== */}

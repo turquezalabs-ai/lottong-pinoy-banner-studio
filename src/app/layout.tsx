@@ -25,9 +25,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
+            <body
         className={`${montserrat.variable} antialiased bg-gray-950 text-white`}
         style={{ fontFamily: 'Montserrat, sans-serif' }}
+        suppressHydrationWarning
       >
         {children}
         <Toaster />
