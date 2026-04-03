@@ -38,7 +38,96 @@ export const GAME_BALL_COUNT: Record<string, number> = {
   '6D': 6, '4D': 4, '3D': 3, '2D': 2,
 };
 
-// Blueprint schedule: which game to feature on each day of the week
+// ==========================================
+// BLUEPRINT ROTATION (30-day cycle, 7-game rotation)
+// ==========================================
+// The blueprint rotates through 7 games continuously:
+// Day 1=Mega(6/45), Day 2=Lotto(6/42), Day 3=4D, Day 4=6D,
+// Day 5=Ultra(6/58), Day 6=Grand(6/55), Day 7=Super(6/49)
+// Then repeats. Each day gets a different caption template (30 total).
+// Post time: 10:00 AM daily
+export const BLUEPRINT_ROTATION: string[] = [
+  '6/45',  // Day 1 → Wednesday
+  '6/42',  // Day 2 → Thursday
+  '4D',    // Day 3 → Friday
+  '6D',    // Day 4 → Saturday
+  '6/58',  // Day 5 → Sunday
+  '6/55',  // Day 6 → Monday
+  '6/49',  // Day 7 → Tuesday
+];
+
+// Blueprint post time (10:00 AM)
+export const BLUEPRINT_POST_TIME = '10:00';
+
+// Total blueprint days in one cycle
+export const BLUEPRINT_CYCLE_DAYS = 30;
+
+// Get the game for a specific blueprint day (1-based)
+export function getBlueprintGameForDay(dayIndex: number): string {
+  const day = Math.max(1, Math.min(BLUEPRINT_CYCLE_DAYS, dayIndex));
+  const rotationIndex = (day - 1) % BLUEPRINT_ROTATION.length;
+  return BLUEPRINT_ROTATION[rotationIndex];
+}
+
+// ==========================================
+// PCSO DRAW SCHEDULE (actual draw days)
+// ==========================================
+// Updated per PCSO official schedule:
+// Ultra Lotto 6/58 – Tuesday, Friday, Sunday at 9 PM
+// Grand Lotto 6/55 – Monday, Wednesday, Saturday at 9 PM
+// Super Lotto 6/49 – Tuesday, Thursday, Sunday at 9 PM
+// Mega Lotto 6/45 – Monday, Wednesday, Friday at 9 PM
+// Lotto 6/42 – Tuesday, Thursday, Saturday at 9 PM
+// 6D Lotto – Tuesday, Thursday, Saturday at 9 PM
+// 4D Lotto – Monday, Wednesday, Friday at 9 PM
+// 0=Sunday, 1=Monday, ..., 6=Saturday
+export const SCHEDULE_MAP: Record<number, string[]> = {
+  0: ['6/58', '6/49'],                    // Sunday
+  1: ['6/55', '6/45', '4D'],              // Monday
+  2: ['6/58', '6/49', '6/42', '6D'],      // Tuesday
+  3: ['6/55', '6/45', '4D'],              // Wednesday
+  4: ['6/49', '6/42', '6D'],              // Thursday
+  5: ['6/58', '6/45', '4D'],              // Friday
+  6: ['6/55', '6/42', '6D'],              // Saturday
+};
+
+// Draw time (9:00 PM)
+export const DRAW_TIME = '21:00';
+
+// ==========================================
+// ANALYSIS POSTING SCHEDULE
+// ==========================================
+// Analysis posts go out the NEXT MORNING after draws.
+// Starting at 7:30 AM with 30-minute gaps between each game's post.
+// Example: Friday draws (6/58, 6/45, 4D) → Saturday posts at 7:30, 8:00, 8:30 AM
+export const ANALYSIS_POST_START_TIME = '07:30';
+export const ANALYSIS_POST_GAP_MINUTES = 30;
+
+// Get which games were drawn on a specific day of week
+export function getDrawsForDayOfWeek(dayOfWeek: number): string[] {
+  return SCHEDULE_MAP[dayOfWeek] || [];
+}
+
+// Get the next day's analysis post times based on draws from a given day
+// Returns array of { game, postTime } sorted by post time
+export function getNextDayAnalysisPosts(fromDayOfWeek: number): { game: string; postTime: string }[] {
+  const drawnGames = getDrawsForDayOfWeek(fromDayOfWeek);
+  const posts: { game: string; postTime: string }[] = [];
+  const startHour = 7;
+  const startMinute = 30;
+
+  drawnGames.forEach((game, index) => {
+    const totalMinutes = startHour * 60 + startMinute + (index * ANALYSIS_POST_GAP_MINUTES);
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    const postTime = `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
+    posts.push({ game, postTime });
+  });
+
+  return posts;
+}
+
+// Legacy compat: keep old BLUEPRINT_SCHEDULE for batch ZIP generation
 // 0=Sunday, 1=Monday, ..., 6=Saturday
 export const BLUEPRINT_SCHEDULE: Record<number, string[]> = {
   0: ['6/58'],  // Sunday -> Ultra Lotto
@@ -48,17 +137,6 @@ export const BLUEPRINT_SCHEDULE: Record<number, string[]> = {
   4: ['6/42'],  // Thursday -> Lotto 6/42
   5: ['4D'],    // Friday -> 4D
   6: ['6D'],    // Saturday -> 6D
-};
-
-// PCSO draw schedule by day of week
-export const SCHEDULE_MAP: Record<number, string[]> = {
-  0: ['6/58', '6/45', '4D', '3D', '2D'],
-  1: ['4D', '3D', '2D'],
-  2: ['6D', '3D', '2D'],
-  3: ['6/45', '4D', '3D', '2D'],
-  4: ['6/55', '3D', '2D'],
-  5: ['6/45', '6D', '3D', '2D'],
-  6: ['6/55', '6/42', '6D', '3D', '2D'],
 };
 
 // Number of circles in the Blueprint grid (5x4)
