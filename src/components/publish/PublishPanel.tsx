@@ -174,21 +174,28 @@ export default function PublishPanel({
 
   // ---- Load accounts from localStorage on mount ----
   // Auto-cleanup: remove any old demo entries that may have been saved previously
+   // ---- Load accounts from localStorage on mount ----
+  // Auto-cleanup: remove any old demo entries that may have been saved previously
   useEffect(() => {
     const saved = localStorage.getItem('lp-social-accounts');
     if (saved) {
       try {
         const parsed = JSON.parse(saved) as SocialAccount[];
-        const cleaned = parsed.filter((a: Record<string, unknown>) => !a.isDemo);
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const cleaned = parsed.filter((a: any) => !a.isDemo);
         if (cleaned.length !== parsed.length) {
+          // Old demo entries found — remove them permanently
           localStorage.setItem('lp-social-accounts', JSON.stringify(cleaned));
         }
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time mount init from client localStorage
         setAccounts(cleaned);
       } catch {
         localStorage.removeItem('lp-social-accounts');
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time mount init from client localStorage
         setAccounts([]);
       }
     } else {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time mount init from client localStorage
       setAccounts([]);
     }
   }, []);
